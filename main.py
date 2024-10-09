@@ -13,25 +13,35 @@ class YouTubeDownload:
     
 
     def mostrarTitulo(self):
-        st.write(f"**Titulo:** {self.youtube.title}") #
-        self.mostrarStreams()
+        st.write(f"**Título:** {self.youtube.title}")
+        self.opcion_descarga = st.radio("**¿Qué desea descargar?**", ("Audio","Video"))  # Opción entre video o audio
+        if self.opcion_descarga == "Video":
+            self.mostrarStreamsVideo()
+        else:
+            self.mostrarStreamsAudio()
 
 
-    def mostrarStreams(self):
-        streams=self.youtube.streams 
-        #opciones de la calidad y tipo para descargar el video
-
-        stream_opciones=[
-            f"Resolución: {stream.resolution or 'N/A'}/ FPS: {getattr(stream, 'fps', 'N/A')}/ Tipo: {stream.mime_type}"
-              for stream in streams
+    def mostrarStreamsVideo(self):
+        # Mostrar streams progresivos (video con audio) en cualquier formato 
+        streams = self.youtube.streams.filter(progressive=True)  #minima calidad, si se quiere mas toca sin audio
+        stream_opciones = [
+            f"Resolución: {stream.resolution}/ FPS: {getattr(stream, 'fps', 'N/A')}/ Tipo: {stream.mime_type}"
+            for stream in streams
         ]
-        
-        indice = st.selectbox("Elija una opción de stream: ", list(range(len(stream_opciones))),
-                              format_func=lambda x: stream_opciones[x])  # Selección con indice
-        self.stream = streams[indice]  #selecciona el stream correcto usando el índice
+        indice = st.selectbox("Elija una opción de stream de video: ", list(range(len(stream_opciones))),
+                              format_func=lambda x: stream_opciones[x])
+        self.stream = streams[indice]
 
-        #indice=st.selectbox("Elija una opción de stream: ", stream_opciones) #escojer una opcion mediante un selectbox
-        #self.stream=streams[stream_opciones(indice)] #guardar lo que se selecciono en el stream del metodo init
+
+    def mostrarStreamsAudio(self):
+        streams = self.youtube.streams.filter(only_audio=True)  # Solo obtener streams de audio
+        stream_opciones = [
+            f"Audio bitrate: {stream.abr}/ Tipo: {stream.mime_type}"
+            for stream in streams
+        ]
+        indice = st.selectbox("Elija una opción de stream de audio: ", list(range(len(stream_opciones))),
+                              format_func=lambda x: stream_opciones[x])
+        self.stream = streams[indice]
 
 
     def getTamañoArchivo(self):
@@ -40,26 +50,36 @@ class YouTubeDownload:
     
 
     def getContinuar(self, tamaño_archivo):
-        st.write(f"**Titulo:** {self.youtube.title}")
+        st.write(f"**Título:** {self.youtube.title}")
         st.write(f"**Autor:** {self.youtube.author}")
         st.write(f"**Tamaño:**  {tamaño_archivo:.2f} MB")
-        st.write(f"**Resolución:**  {self.stream.resolution or 'N/A'}" )
-        st.write(f"**FPS:** {getattr(self.stream, 'FPS', 'N/A')}")
+
+        if self.opcion_descarga == "Video":
+            st.write(f"**Resolución:** {self.stream.resolution or 'N/A'}")
+            st.write(f"**FPS:** {getattr(self.stream, 'fps', 'N/A')}")
+        else:
+            st.write(f"**Bitrate de audio:** {self.stream.abr}")
 
         if st.button("DESCARGAR"):
-            self.descargar()
-    
+            if self.opcion_descarga == "Video":
+                self.descargar_video()  # Descargar video
+            else:
+                self.descargar_mp3()  # Descargar audio y convertir a MP3
 
-    def descargar(self):
-        self.stream.download()
-        st.success("¡DESCARGA COMPLETADA!")
-    
+
+    def descargar_video(self):
+        self.stream.download()  # Descargar el video
+        st.success("¡Video descargado!")
+
+    def descargar_mp3(self):
+        self.stream.download()  # Descargar el audio
+        st.success("¡Audio descargado!")
 
     @staticmethod
     def onProgress(stream=None, chunk=None, remaining=None):
-        file_size=stream.filesize/1000000 
-        file_download=file_size-(remaining/1000000)
-        st.progress(file_download/file_size)  
+        tamaño_archivo=stream.filesize/1000000 
+        tamaño_descarga=tamaño_archivo-(remaining/1000000)
+        st.progress(tamaño_descarga/tamaño_archivo)  
 
 
 if __name__=="__main__":
@@ -70,6 +90,7 @@ if __name__=="__main__":
     if url:
         descargar=YouTubeDownload(url)
         descargar.mostrarTitulo()
+
         if descargar.stream:
             tamaño_archivo=descargar.getTamañoArchivo()
             descargar.getContinuar(tamaño_archivo)
