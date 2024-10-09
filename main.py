@@ -1,4 +1,5 @@
-import pytube
+from pytubefix import YouTube
+from pytubefix.cli import on_progress
 import streamlit as st #para mostrar GUI en la weeb
 
 
@@ -7,7 +8,7 @@ class YouTubeDownload:
     def __init__(self,url):
         self.url=url
         #atributo Youtube: con la url y su progreso de descarga
-        self.youtube=pytube.YouTube(self.url, on_progress_callback=YouTubeDownload.onProgress)
+        self.youtube = YouTube(self.url, on_progress_callback=YouTubeDownload.onProgress)
         self.stream=None
     
 
@@ -19,15 +20,18 @@ class YouTubeDownload:
     def mostrarStreams(self):
         streams=self.youtube.streams 
         #opciones de la calidad y tipo para descargar el video
-        #streams.get_by_resolution
+
         stream_opciones=[
             f"Resolución: {stream.resolution or 'N/A'}/ FPS: {getattr(stream, 'fps', 'N/A')}/ Tipo: {stream.mime_type}"
               for stream in streams
         ]
-        #indice = st.selectbox("Elija una opción de stream: ", list(range(len(stream_opciones))), format_func=lambda x: stream_opciones[x])
-        #self.stream = streams[indice]  # Ahora selecciona el stream correcto usando el índice
-        indice=st.selectbox("Elija una opción de stream: ", stream_opciones) #escojer una opcion mediante un selectbox
-        self.stream=streams[stream_opciones(indice)] #guardar lo que se selecciono en el stream del metodo init
+        
+        indice = st.selectbox("Elija una opción de stream: ", list(range(len(stream_opciones))),
+                              format_func=lambda x: stream_opciones[x])  # Selección con indice
+        self.stream = streams[indice]  #selecciona el stream correcto usando el índice
+
+        #indice=st.selectbox("Elija una opción de stream: ", stream_opciones) #escojer una opcion mediante un selectbox
+        #self.stream=streams[stream_opciones(indice)] #guardar lo que se selecciono en el stream del metodo init
 
 
     def getTamañoArchivo(self):
@@ -43,7 +47,7 @@ class YouTubeDownload:
         st.write(f"**FPS:** {getattr(self.stream, 'FPS', 'N/A')}")
 
         if st.button("DESCARGAR"):
-            st.descargar()
+            self.descargar()
     
 
     def descargar(self):
