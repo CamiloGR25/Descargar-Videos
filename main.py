@@ -1,7 +1,7 @@
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 import streamlit as st #para mostrar GUI en la weeb
-
+import os 
 
 class YouTubeDownload:
 
@@ -68,12 +68,23 @@ class YouTubeDownload:
 
 
     def descargar_video(self):
-        self.stream.download()  # Descargar el video
+        self.stream.download(output_path="Videos")  # Descargar el video
         st.success("¡Video descargado!")
 
     def descargar_mp3(self):
-        self.stream.download()  # Descargar el audio
+        # Descargar en MP4 o WEMB
+        archivo_descargado=self.stream.download(output_path="Audios")  # Descargar el audio
         st.success("¡Audio descargado!")
+
+        # Convertir a MP3:
+        # Obtener la ruta del archivo de salida, renombrándolo a .mp3
+        archivo_mp3 = os.path.splitext(archivo_descargado)[0] + ".mp3"
+        
+        # Renombrar el archivo descargado a .mp3
+        os.rename(archivo_descargado, archivo_mp3)
+
+        st.success("¡Audio guardado en formato MP3!")
+           
 
     @staticmethod
     def onProgress(stream=None, chunk=None, remaining=None):
