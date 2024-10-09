@@ -8,6 +8,7 @@
 
 # Iniciar aplicación:
 
-con el frameWork streamlit:
+Ejecutando el archivo: RUN.bat
 
+Con el frameWork streamlit:
 --- streamlit run main.py ---
